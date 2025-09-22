@@ -3,7 +3,9 @@
 
 ## Setup
 > [!IMPORTANT]
-> Python 3.10+ is required.
+> Python 3.10+ is required. <br/>
+> Yahoo Finance MCP Server is a required dependency. [:octocat: GitHub Repo](https://github.com/Alex2Yang97/yahoo-finance-mcp)<br/>
+> You must configure `mcp_config.json` to register your MCP server. <br/>
 
 ```bash
 pip install -r requirements.txt
