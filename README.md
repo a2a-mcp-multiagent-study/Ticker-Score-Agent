@@ -1,6 +1,9 @@
 # Ticker-Score-Agent
 금융 데이터(MCP) + 뉴스 요약을 기반으로 점수를 산출하는 AGENT
 
+<img width="491" alt="image" src="https://github.com/user-attachments/assets/4a5a1f22-d33d-4a74-a3ad-83956db721e5" />
+
+
 ## Setup
 > [!IMPORTANT]
 > Python 3.10+ is required. <br/>
