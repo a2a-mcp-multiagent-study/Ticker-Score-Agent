@@ -3,6 +3,10 @@
 
 <img width="491" alt="image" src="https://github.com/user-attachments/assets/4a5a1f22-d33d-4a74-a3ad-83956db721e5" />
 
+## LangGraph Studio 
+|Graph|Chat|
+|-|-|
+|<img width="377" alt="image" src="https://github.com/user-attachments/assets/fb3ec426-b46f-4c0c-b372-24af747c5802" />|<img width="568" alt="image" src="https://github.com/user-attachments/assets/0d0b8e31-c990-4fc3-97c7-d9478dcab6b6" />|
 
 ## Setup
 > [!IMPORTANT]
