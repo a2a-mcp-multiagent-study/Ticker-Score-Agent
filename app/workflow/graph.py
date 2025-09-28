@@ -3,7 +3,7 @@ from typing import Any, Dict
 from langgraph.graph import StateGraph, START, END
 from langgraph.checkpoint.memory import MemorySaver
 from app.workflow.state import ScoreState
-from app.workflow.nodes import node_yahoo, node_dart, node_score, node_finalize
+from app.workflow.nodes import node_yahoo, node_dart, node_score, node_finalize, node_ingest
 from uuid import uuid4
 from app.workflow.trace import events_to_mermaid_flow
 
@@ -11,20 +11,23 @@ from app.workflow.trace import events_to_mermaid_flow
 memory = MemorySaver()
 builder = StateGraph(ScoreState)
 
+builder.add_node("ingest", node_ingest)
 builder.add_node("yahoo",    node_yahoo)
 builder.add_node("dart",     node_dart)
 builder.add_node("score",    node_score)
 builder.add_node("finalize", node_finalize)
 
 # START → yahoo & dart (병렬) → score → finalize → END
-builder.add_edge(START, "yahoo")
-builder.add_edge(START, "dart")
+builder.add_edge(START, "ingest")
+builder.add_edge("ingest", "yahoo")
+builder.add_edge("ingest", "dart")
 builder.add_edge("yahoo", "score")
 builder.add_edge("dart",  "score")
 builder.add_edge("score", "finalize")
 builder.add_edge("finalize", END)
 
-graph = builder.compile(checkpointer=memory)
+# graph = builder.compile(checkpointer=memory)
+graph = builder.compile()  # ✅ 메모리 저장 비활성화
 
 # 실행 유틸
 async def run_once(ticker: str) -> Dict[str, Any]:

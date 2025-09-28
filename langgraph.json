@@ -1,0 +1,13 @@
+{
+  "graphs": {
+    "default": "app.workflow.graph:graph"
+  },
+  "env": ".env",
+  "dependencies": [
+    "langchain-openai",
+    "langchain",
+    "langgraph",
+    "langchain-mcp-adapter",
+    "aiofiles"
+  ]
+}

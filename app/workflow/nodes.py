@@ -1,4 +1,7 @@
 from __future__ import annotations
+
+from langchain_core.messages import AIMessage, HumanMessage
+
 from app.workflow.state import ScoreState
 # ✅ 간단 버전 mcp_clients 기반
 from app.workflow.mcp_clients import (
@@ -9,7 +12,7 @@ from app.workflow.mcp_clients import (
     # get_historical_stock_prices,
     # get_recommendations,
 )
-from app.workflow.llm import llm_naver
+from app.workflow.llm import llm_openapi
 from app.workflow.prompts import render_prompt
 from app.workflow.trace import traced
 import json
@@ -36,11 +39,82 @@ def _parse_news_blocks(s: str, limit: int = 5) -> List[Dict[str, Any]]:
             "url": (url.group(1).strip() if url else None),
         })
     return out
+
+def _to_text(content: Any) -> str:
+    """LangChain 메시지 content가 str | list | dict 인 모든 경우를 문자열로 안전 변환"""
+    if content is None:
+        return ""
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        # OpenAI/LC 멀티파트 형식: [{"type":"text","text":"..."} , ...]
+        parts = []
+        for p in content:
+            if isinstance(p, dict):
+                # 우선순위: text / content / value
+                for k in ("text", "content", "value"):
+                    if k in p and isinstance(p[k], str):
+                        parts.append(p[k])
+                        break
+                else:
+                    parts.append(str(p))
+            else:
+                parts.append(str(p))
+        return "\n".join(parts)
+    if isinstance(content, dict):
+        # dict로 오면 text/ content 우선
+        for k in ("text", "content", "value"):
+            v = content.get(k)
+            if isinstance(v, str):
+                return v
+        return str(content)
+    return str(content)
+
+# AAPL, TSLA, GOOG, 005930.KS, AAPL.US 등도 매칭
+TICKER_PATTERN = r"\b([A-Z]{1,5}(?:\.[A-Z]{2,4})?|[0-9]{4,6}\.[A-Z]{2})\b"
+
+@traced("ingest")
+async def node_ingest(state: ScoreState) -> ScoreState:
+    # 1) 최신 사용자 입력 가져오기
+    msgs = state.get("messages") or []
+    last_human = next((m for m in reversed(msgs) if isinstance(m, HumanMessage)), None)
+    content = _to_text(getattr(last_human, "content", "")) or _to_text(state.get("text"))
+    content = (content or "").strip()
+    if not content:
+        return {**state, "logs": [*(state.get("logs") or []), "ingest:error:no_input"]}
+
+    # 2) 티커 추출(대문자 1~5자)
+    m = re.search(TICKER_PATTERN, content)
+    new_ticker = (m.group(1) if m else content).upper().strip()
+
+    old_ticker = (state.get("ticker") or "").upper().strip()
+    if new_ticker and new_ticker != old_ticker:
+        # 티커가 바뀌면 파생 값 초기화
+        return {
+            **state,
+            "ticker": new_ticker,
+            "price": None,
+            "news": None,
+            "filings": None,
+            "score": None,
+            "rationale": None,
+            "logs": [*(state.get("logs") or []), f"ingest:set:{new_ticker}"],
+        }
+
+    # 동일하면 그대로
+    return {**state, "ticker": new_ticker, "logs": [*(state.get("logs") or []), f"ingest:keep:{new_ticker}"]}
+
 @traced("yahoo")
 async def node_yahoo(state: "ScoreState") -> dict:
     async with open_mcp_client() as client:
-        info = await get_stock_info(client, state["ticker"])
-        news = await get_yahoo_finance_news(client, state["ticker"])
+        # info = await get_stock_info(client, state["ticker"])
+        # news = await get_yahoo_finance_news(client, state["ticker"])
+        # ⬇️ 동기 함수를 스레드로 보냄 (둘 다 동시에 병렬 실행)
+        import asyncio
+        info, news = await asyncio.gather(
+            get_stock_info(client, state["ticker"]),
+            get_yahoo_finance_news(client, state["ticker"]),
+        )
 
     # --- 가격 정규화 ---
     # --- get_stock_info: 문자열(JSON) 또는 dict 모두 처리 ---
@@ -141,7 +215,8 @@ async def node_score(state: ScoreState) -> dict:
     )
 
     # LangChain ChatClovaX 호출
-    resp = await llm_naver.ainvoke(prompt)
+    # resp = await llm_naver.ainvoke(prompt)
+    resp = await llm_openapi.ainvoke(prompt)
     # resp.content(혹은 resp.response) 구조는 사용하는 어댑터에 맞게 확인
     text = getattr(resp, "content", None) or str(resp)
 
@@ -156,7 +231,15 @@ async def node_score(state: ScoreState) -> dict:
         rationale = text[:200]
         score = 50
 
-    return {"score": score, "rationale": rationale, "logs": ["score:ok"]}
+    reply = f"[{state['ticker']}] 점수: {score}\n사유: {rationale}"
+    messages = state.get("messages", []) + [AIMessage(content=reply)]
+
+    return {
+        **state,
+        "messages": messages,
+        "score": score,
+        "rationale": rationale,
+        "logs": ["score:ok"]}
 
 # ── Finalize ─────────────────────────────────────────────────────────────────
 @traced("finalize")

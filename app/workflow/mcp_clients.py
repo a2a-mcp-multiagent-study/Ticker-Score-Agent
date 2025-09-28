@@ -3,6 +3,8 @@ import json
 from typing import Any, Dict
 from contextlib import asynccontextmanager
 
+import aiofiles
+
 from app.settings import settings
 from langchain_mcp_adapters.client import MultiServerMCPClient
 
@@ -10,8 +12,10 @@ from langchain_mcp_adapters.client import MultiServerMCPClient
 @asynccontextmanager
 async def open_mcp_client() -> MultiServerMCPClient:
     """mcp_config.json 로드 후 MultiServerMCPClient 반환"""
-    with open(settings.mcp_config_path, "r", encoding="utf-8") as f:
-        cfg = json.load(f)
+    # ✅ 비동기 파일 읽기
+    async with aiofiles.open(settings.mcp_config_path, "r", encoding="utf-8") as f:
+        text = await f.read()
+    cfg = json.loads(text)
 
     servers_cfg = cfg.get("servers") or cfg.get("mcpServers") or {}
     if not servers_cfg:
