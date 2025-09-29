@@ -8,6 +8,12 @@
 |-|-|
 |<img width="377" alt="image" src="https://github.com/user-attachments/assets/fb3ec426-b46f-4c0c-b372-24af747c5802" />|<img width="568" alt="image" src="https://github.com/user-attachments/assets/0d0b8e31-c990-4fc3-97c7-d9478dcab6b6" />|
 
+## A2A PoC 
+|Graph|Chat|
+|-|-|
+|<img width="422" height="243" alt="image" src="https://github.com/user-attachments/assets/1dfacce7-3c7f-437d-8cfc-3f59e39a31e1" />|<img width="512" alt="image" src="https://github.com/user-attachments/assets/2af37292-5358-4f28-8673-604df346af2b" />
+|
+
 ## Setup
 > [!IMPORTANT]
 > Python 3.10+ is required. <br/>
