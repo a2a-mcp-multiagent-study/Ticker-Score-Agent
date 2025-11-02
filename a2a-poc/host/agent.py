@@ -6,6 +6,9 @@ import os
 from typing import Dict, Any, Optional
 
 from google.adk.models.lite_llm import LiteLlm
+from google.adk.tools import MCPToolset
+from google.adk.tools.mcp_tool import StdioConnectionParams
+from mcp import StdioServerParameters
 
 try:
     from google.adk.agents import Agent, LlmAgent
@@ -29,6 +32,16 @@ agent2_remote = RemoteA2aAgent(
     name="agent2_remote",
     description="자기소개를 반환하는 Agent2",
     agent_card=f"http://127.0.0.1:8002{AGENT_CARD_WELL_KNOWN_PATH}",
+)
+agent3_remote = RemoteA2aAgent(
+    name="agent3_remote",
+    description="A2A remote Agent3",
+    agent_card=f"http://127.0.0.1:8003{AGENT_CARD_WELL_KNOWN_PATH}",
+)
+agent4_remote = RemoteA2aAgent(
+    name="agent4_remote",
+    description="A2A remote Agent4",
+    agent_card=f"http://127.0.0.1:8004{AGENT_CARD_WELL_KNOWN_PATH}",
 )
 
 # Ticker Score Agent (신규 추가)
