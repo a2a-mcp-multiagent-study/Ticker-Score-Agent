@@ -6,6 +6,8 @@ from __future__ import annotations
 from typing import Dict, Any, Optional
 import logging
 
+from app.workflow.graph import run_once
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -14,8 +16,6 @@ try:
 except ImportError as e:
     logger.error("google-adk not installed. Install with: pip install google-adk")
     raise RuntimeError("google-adk is required for A2A agent") from e
-
-from app.workflow.graph import run_once
 
 
 async def calculate_ticker_score(
@@ -115,7 +115,7 @@ def get_ticker_info(
 
 
 # ADK Agent 정의
-ticker_agent = LlmAgent(
+root_agent = LlmAgent(
     name="ticker_score_agent",
     description="금융 데이터와 뉴스를 분석하여 주식 종목의 투자 점수(0-100)를 산출하는 에이전트",
     model=LiteLlm(model="openai/gpt-4o"),
