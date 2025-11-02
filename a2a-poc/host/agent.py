@@ -3,6 +3,9 @@ import os
 from typing import Dict, Any, Optional
 
 from google.adk.models.lite_llm import LiteLlm
+from google.adk.tools import MCPToolset
+from google.adk.tools.mcp_tool import StdioConnectionParams
+from mcp import StdioServerParameters
 
 try:
     from google.adk.agents import Agent, LlmAgent
@@ -29,6 +32,16 @@ agent2_remote = RemoteA2aAgent(
     name="agent2_remote",
     description="A2A remote Agent2",
     agent_card=f"http://127.0.0.1:8002{AGENT_CARD_WELL_KNOWN_PATH}",
+)
+agent3_remote = RemoteA2aAgent(
+    name="agent3_remote",
+    description="A2A remote Agent3",
+    agent_card=f"http://127.0.0.1:8003{AGENT_CARD_WELL_KNOWN_PATH}",
+)
+agent4_remote = RemoteA2aAgent(
+    name="agent4_remote",
+    description="A2A remote Agent4",
+    agent_card=f"http://127.0.0.1:8004{AGENT_CARD_WELL_KNOWN_PATH}",
 )
 
 
@@ -73,7 +86,7 @@ agent2_remote = RemoteA2aAgent(
 # )
 
 
-def introduce_all(input: Optional[Dict[str, Any]] = None, *, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+def mpc_server(input: Optional[Dict[str, Any]] = None, *, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     input = input or {}
     """LLM에게 두 원격 에이전트로 transfer 하라고 지시하는 신호 역할용.
        (직접 HTTP로 툴을 치지 않는다)"""
@@ -83,7 +96,7 @@ def introduce_all(input: Optional[Dict[str, Any]] = None, *, context: Optional[D
 
 root_agent = LlmAgent(
     name="host",
-    description="두 A2A 원격 에이전트에서 소개를 받아 합치는 호스트",
+    description="A2A 원격 에이전트에서 소개를 받아 합치는 호스트",
     # 모델은 ADK가 인식하는 키를 사용. (OpenAI는 LiteLlm로 래핑)
     model=LiteLlm(model="openai/gpt-4o"),  # 또는 "gemini-2.0-flash"
     instruction=(
@@ -93,9 +106,27 @@ root_agent = LlmAgent(
         "사용자가 소개를 원하면 반드시 순서대로:\n"
         "1) agent1_remote 로 transfer 하여 'introduce' 스킬을 호출해 JSON을 받는다.\n"
         "2) agent2_remote 로 transfer 하여 'introduce' 스킬을 호출해 JSON을 받는다.\n"
-        "3) 최종으로 {agent1: <JSON>, agent2: <JSON>, combined_text: 'Agent1: ... | Agent2: ...'} 포맷의 JSON만 출력한다.\n"
+        "3) agent3_remote 로 transfer 하여 'introduce' 스킬을 호출해 JSON을 받는다.\n"
+        "4) agent4_remote 로 transfer 하여 'introduce' 스킬을 호출해 JSON을 받는다.\n"
+        "5) 최종으로 {agent1: <JSON>, agent2: <JSON>, combined_text: 'Agent1: ... | Agent2: ...'} 포맷의 JSON만 출력한다.\n"
         "원격 호출 오류 시 해당 에이전트 값은 {error: <메시지>}로 채우고 combined_text에는 'N/A'를 넣어라."
     ),
-    tools=[introduce_all],  # 함수툴
-    sub_agents=[agent1_remote, agent2_remote],
+    tools=[mpc_server],  # 함수툴
+    # tools=[
+    #         MCPToolset(
+    #             connection_params=StdioConnectionParams(
+    #                 server_params=StdioServerParameters(
+    #                     # (1) FastMCP 파이썬 서버로 stdio 실행
+    #                     command="/Users/hyuno/dev/ai/Ticker-Score-Agent/a2a-poc/.venv/bin/python",
+    #                     args=[
+    #                         "-u",
+    #                         "/Users/hyuno/dev/ai/a2a-mcp-multiagent-poc/mcp-server/yahoo-finance-mcp/server.py"
+    #                     ],
+    #                 )
+    #             ),
+    #             # tool_filter=["read_file", "list_directory"],  # 필요한 툴만 노출 (옵션)
+    #         )
+    #     ],
+    sub_agents=[agent1_remote, agent2_remote, agent3_remote, agent4_remote],
+
 )
