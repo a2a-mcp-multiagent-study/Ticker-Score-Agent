@@ -11,8 +11,7 @@
 ## A2A PoC 
 |Graph|Chat|
 |-|-|
-|<img width="422" height="243" alt="image" src="https://github.com/user-attachments/assets/1dfacce7-3c7f-437d-8cfc-3f59e39a31e1" />|<img width="512" alt="image" src="https://github.com/user-attachments/assets/2af37292-5358-4f28-8673-604df346af2b" />
-|
+|<img width="422" height="243" alt="image" src="https://github.com/user-attachments/assets/1dfacce7-3c7f-437d-8cfc-3f59e39a31e1" />|<img width="512" alt="image" src="https://github.com/user-attachments/assets/2af37292-5358-4f28-8673-604df346af2b" />|
 
 ## 📚 Documentation
 
