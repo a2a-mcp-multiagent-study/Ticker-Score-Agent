@@ -2,7 +2,7 @@ from __future__ import annotations
 import json
 from fastapi import FastAPI, Query
 from fastapi.responses import JSONResponse, StreamingResponse
-from app.workflow.graph import run_once, run_stream
+from workflow.graph import run_with_trace, run_stream, run_once
 
 app = FastAPI(title="Parallel MCP + CLOVA X Scoring")
 
